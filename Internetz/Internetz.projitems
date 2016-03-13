@@ -10,9 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)InternetStream.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Protocols\NetworkPipe.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SocketUtils.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="$(MSBuildThisFileDirectory)Protocols\" />
   </ItemGroup>
 </Project>

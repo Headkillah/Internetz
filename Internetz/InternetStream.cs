@@ -9,17 +9,18 @@ using System.Net.Sockets;
 
 namespace Internetz {
 	public class InternetStream : Stream {
-		public Socket Socket;
 		public NetworkStream NetStream;
 		public BinaryReader Reader;
 		public BinaryWriter Writer;
+		public object Userdata;
 
-
-		public InternetStream(Socket S) {
-			Socket = S;
-			NetStream = new NetworkStream(S);
+		public InternetStream(NetworkStream NetStream) {
+			this.NetStream = NetStream;
 			Reader = new BinaryReader(NetStream);
 			Writer = new BinaryWriter(NetStream);
+		}
+
+		public InternetStream(Socket S) : this(new NetworkStream(S)) {
 		}
 
 		public override bool CanRead
@@ -85,6 +86,20 @@ namespace Internetz {
 
 		public override void Write(byte[] buffer, int offset, int count) {
 			NetStream.Write(buffer, offset, count);
+		}
+
+		public virtual void WriteByteArray(byte[] Bytes) {
+			Writer.Write((int)Bytes.Length);
+			for (int i = 0; i < Bytes.Length; i++)
+				WriteByte(Bytes[i]);
+		}
+
+		public virtual byte[] ReadByteArray() {
+			int Count = Reader.ReadInt32();
+			byte[] Bytes = new byte[Count];
+			for (int i = 0; i < Bytes.Length; i++)
+				Bytes[i] = (byte)ReadByte();
+			return Bytes;
 		}
 
 		public virtual void WriteStruct<T>(T Val) where T : struct {
