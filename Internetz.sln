@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Internetz", "Internetz\Internetz.shproj", "{4F99FC37-2783-48C9-B574-06579BEB7B6F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InternetzLib", "InternetzLib\InternetzLib.csproj", "{72E7178B-C053-40B2-830D-6E9F31932440}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{42034008-0050-4A4C-A502-6A2BA1671B22}"
+EndProject
+Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Internetz\Internetz.projitems*{72e7178b-c053-40b2-830d-6e9f31932440}*SharedItemsImports = 4
+		Internetz\Internetz.projitems*{4f99fc37-2783-48c9-b574-06579beb7b6f}*SharedItemsImports = 13
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{72E7178B-C053-40B2-830D-6E9F31932440}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72E7178B-C053-40B2-830D-6E9F31932440}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72E7178B-C053-40B2-830D-6E9F31932440}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72E7178B-C053-40B2-830D-6E9F31932440}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42034008-0050-4A4C-A502-6A2BA1671B22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42034008-0050-4A4C-A502-6A2BA1671B22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42034008-0050-4A4C-A502-6A2BA1671B22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42034008-0050-4A4C-A502-6A2BA1671B22}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
