@@ -10,6 +10,8 @@ using Internetz;
 
 namespace Test {
 	class Program {
+		static int Port = 9999;
+
 		static void Main(string[] args) {
 			Console.Title = "Internetz Test";
 
@@ -26,11 +28,24 @@ namespace Test {
 		}
 
 		static void Server() {
-			BinarySocket S = new BinarySocket(ProtocolType.Tcp);
+			Socket S = SocketUtils.CreateStreamTCP();
+			S.Bind(new IPEndPoint(IPAddress.Any, Port));
+			S.Listen(0);
+
+			InternetStream Stream = new InternetStream(S.Accept());
+			Stream.Writer.Write("Hello World!");
 		}
 
 		static void Client() {
-			BinarySocket C = new BinarySocket(ProtocolType.Tcp);
+			Socket C = SocketUtils.CreateStreamTCP();
+			if (C.TryConnect(IPAddress.Loopback, Port)) {
+				InternetStream Stream = new InternetStream(C);
+
+				Console.WriteLine(Stream.Reader.ReadString());
+
+				while (C.Connected)
+					;
+			}
 		}
 	}
 }

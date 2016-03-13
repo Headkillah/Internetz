@@ -9,6 +9,10 @@
     <Import_RootNamespace>Internetz</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)BinarySocket.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)InternetStream.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SocketUtils.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)Protocols\" />
   </ItemGroup>
 </Project>
