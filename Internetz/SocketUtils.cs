@@ -19,6 +19,13 @@ namespace Internetz {
 			return false;
 		}
 
+		public static bool TryConnect(this Socket This, IPAddress[] Addresses, int Port) {
+			for (int i = 0; i < Addresses.Length; i++)
+				if (This.TryConnect(Addresses[i], Port))
+					return true;
+			return false;
+		}
+
 		public static bool TryConnect(this Socket This, IPAddress Addr, int Port, int RetryCount) {
 			if (RetryCount == -1) {
 				while (!This.TryConnect(Addr, Port))

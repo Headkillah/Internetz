@@ -13,7 +13,7 @@ namespace Internetz.Protocols {
 	public delegate void OnInternetStream(string Name, InternetStream Stream);
 
 	enum PacketType : int {
-		DATA, STREAM, REQUEST_STREAM
+		NULL, DATA, STREAM, REQUEST_STREAM
 	}
 
 	class PipePacket {
@@ -34,23 +34,35 @@ namespace Internetz.Protocols {
 		}
 
 		public static PipePacket FromInternetStream(InternetStream S) {
-			PipePacket Packet = new PipePacket((PacketType)S.Reader.ReadInt32());
-			Packet.Name = S.Reader.ReadString();
-			Packet.Data = S.ReadByteArray();
-			return Packet;
+			try {
+				PipePacket Packet = new PipePacket((PacketType)S.Reader.ReadInt32());
+				Packet.Name = S.Reader.ReadString();
+				Packet.Data = S.ReadByteArray();
+				return Packet;
+			} catch (IOException) {
+			}
+			return new PipePacket(PacketType.NULL);
 		}
 	}
 
-	public class NetworkPipe {
+	public class NetworkPipe : IDisposable {
 		public event OnInternetStream OnStreamCreated;
 		public Socket Socket;
+		public EndPoint RemoteEndPoint;
 
 		InternetStream Stream;
 		Queue<PipePacket> DataPackets;
 		Dictionary<string, InternetStream> DataStreams;
+		Thread RunThread;
+		bool Disposed = false;
 
-		public NetworkPipe(Socket S) {
+		int PortMin, PortRange, LastPort;
+
+		public NetworkPipe(Socket S, int PortMin = 10000, int PortRange = 10000) {
+			this.PortMin = PortMin;
+			this.PortRange = PortRange;
 			Socket = S;
+			RemoteEndPoint = S.RemoteEndPoint;
 			Stream = new InternetStream(S);
 			DataPackets = new Queue<PipePacket>();
 			DataStreams = new Dictionary<string, InternetStream>();
@@ -72,6 +84,12 @@ namespace Internetz.Protocols {
 		}
 
 		public InternetStream CreateStream(string Name, int Port = 0) {
+			if (DataStreams.ContainsKey(Name))
+				CloseStream(Name);
+
+			LastPort = (LastPort + 1) % PortRange;
+			Port = LastPort + PortMin;
+
 			Socket ServerSock = SocketUtils.CreateStreamTCP();
 			ServerSock.Bind(new IPEndPoint(IPAddress.Any, Port));
 			ServerSock.Listen(0);
@@ -82,6 +100,9 @@ namespace Internetz.Protocols {
 			Pack.ToInternetStream(Stream);
 
 			InternetStream S = new InternetStream(ServerSock.Accept());
+			S.NamedStream = true;
+			S.Name = Name;
+			S.Pipe = this;
 			S.Userdata = ServerSock;
 			DataStreams.Add(Name, S);
 
@@ -90,16 +111,56 @@ namespace Internetz.Protocols {
 			return S;
 		}
 
-		public void RequestStream(string Name) {
+		public InternetStream RequestStream(string Name) {
+			if (DataStreams.ContainsKey(Name))
+				return DataStreams[Name];
+
 			PipePacket Pack = new PipePacket(PacketType.REQUEST_STREAM);
 			Pack.Name = Name;
 			Pack.ToInternetStream(Stream);
+			return GetStream(Name);
 		}
 
 		public InternetStream GetStream(string Name) {
 			while (!DataStreams.ContainsKey(Name))
 				;
 			return DataStreams[Name];
+		}
+
+		public InternetStream[] GetStreams() {
+			List<InternetStream> Streams = new List<InternetStream>();
+			foreach (var KV in DataStreams)
+				Streams.Add(KV.Value);
+			return Streams.ToArray();
+		}
+
+		public void CloseStream(string Name) {
+			if (DataStreams.ContainsKey(Name)) {
+				InternetStream S = DataStreams[Name];
+				S.Flush();
+
+				DataStreams.Remove(Name);
+				S.Close();
+				if (S.Userdata != null && S.Userdata is Socket) {
+					Socket ServerSock = (Socket)S.Userdata;
+					if (ServerSock.Connected)
+						ServerSock.Disconnect(false);
+				}
+			}
+		}
+
+		public void CloseStream(InternetStream S) {
+			string Name = null;
+
+			if (DataStreams.ContainsValue(S))
+				foreach (var KV in DataStreams)
+					if (KV.Value == S) {
+						Name = KV.Key;
+						break;
+					}
+
+			if (Name != null)
+				CloseStream(Name);
 		}
 
 		public void Run() {
@@ -111,7 +172,14 @@ namespace Internetz.Protocols {
 					Socket DataSocket = SocketUtils.CreateStreamTCP();
 					int Port = BitConverter.ToInt32(P.Data, 0);
 					DataSocket.Connect(((IPEndPoint)Socket.RemoteEndPoint).Address, Port);
+
 					InternetStream S = new InternetStream(DataSocket);
+					S.NamedStream = true;
+					S.Name = P.Name;
+					S.Pipe = this;
+
+					if (DataStreams.ContainsKey(P.Name))
+						CloseStream(P.Name);
 					DataStreams.Add(P.Name, S);
 
 					if (OnStreamCreated != null)
@@ -123,9 +191,19 @@ namespace Internetz.Protocols {
 		}
 
 		public void StartRun() {
-			Thread T = new Thread(() => Run());
-			T.IsBackground = true;
-			T.Start();
+			RunThread = new Thread(() => Run());
+			RunThread.IsBackground = true;
+			RunThread.Start();
+		}
+
+		public void Dispose() {
+			if (Disposed)
+				return;
+			Disposed = true;
+
+			if (RunThread.ThreadState == ThreadState.Running)
+				RunThread.Abort();
+			Stream.Dispose();
 		}
 	}
 }
